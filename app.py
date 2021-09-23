@@ -1,16 +1,28 @@
 from flask import Flask
 from flask import request
 from flask import send_file
+from flask import render_template
+from flask import Response
+from werkzeug.utils import secure_filename
+from flask_cors import CORS, cross_origin
+import os
 
-import numpy as np
-from tensorflow.keras.models import load_model
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+# import numpy as np
+# from tensorflow.keras.models import load_model
+# from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-from utils import _bhv_reg_df, _extract_fc
-from nilearn.connectome import ConnectivityMeasure
-from nilearn import plotting
+# from utils import _bhv_reg_df, _extract_fc
+# from nilearn.connectome import ConnectivityMeasure
+# from nilearn import plotting
 
-app = Flask(__name__)
+UPLOAD_FOLDER = 'data'
+ALLOWED_EXTENSIONS = {'pkl'}
+
+
+app = Flask(__name__, template_folder='templates')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 """
 TODO: For more reference and guide refer here: https://flask.palletsprojects.com/en/2.0.x/quickstart/#
@@ -59,20 +71,27 @@ def get_prediction(behaviour):
         "predicted_score": 1
     }
 
-@app.route('/upload')
-def upload_dataset():
-    return render_template('upload.html')
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 """
 Main handler that obtains the dataset uploaded by the user in front-end to the back-end API
 TODO: refer to https://flask.palletsprojects.com/en/2.0.x/patterns/fileuploads/
 TODO: alternatively can refer to https://pythonbasics.org/flask-upload-file/#:~:text=It%20is%20very%20simple%20to,it%20to%20the%20required%20location.
 """
-@app.route("/uploader", methods = ['GET', 'POST'])
+@app.route("/upload", methods = ['GET', 'POST'])
 def upload_dataset():
-    f = request.files['file']
-    # f.save(secure_filename(f.filename))
-    return 'Dataset uploaded!'
+    if request.method == 'POST':
+        f = request.files['file']
+        filename = secure_filename(f.filename)
+        if f and allowed_file(f.filename):
+            f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            return Response('{ "message": "Dataset uploaded!" }', status=200, mimetype='application/json')
+        else:
+            return Response('{ "message": "Invalid dataset format!" }', status=400, mimetype='application/json')
+    elif request.method == 'GET':
+       return render_template('upload.html') 
 
 """
 Main handler that generates and returns the connectivity matrix for the uploaded dataset
@@ -83,16 +102,17 @@ def show_graphs(behaviour):
     # use nilearn's graph library to plot our connectivity matrix
     # return the png image
 
-    args = Args()
-    bhv_data = _bhv_reg_df(args)    # load fmri data from file
+    # args = Args()
+    # bhv_data = _bhv_reg_df(args)    # load fmri data from file
 
-    correlation_measure = ConnectivityMeasure(kind='correlation')
-    correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
+    # correlation_measure = ConnectivityMeasure(kind='correlation')
+    # correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
 
-    path = 'images/' + behaviour + '-conn-matrix.png'
-    display = plotting.plot_matrix(correlation_matrix, colorbar=True, vmax=0.8, vmin=-0.8)
-    display.figure.savefig(path)
-    return send_file(path, mimetype='image/png')
+    # path = 'images/' + behaviour + '-conn-matrix.png'
+    # display = plotting.plot_matrix(correlation_matrix, colorbar=True, vmax=0.8, vmin=-0.8)
+    # display.figure.savefig(path)
+    # return send_file(path, mimetype='image/png')
+    return send_file('images/connectivity-matrix-test.png', mimetype='image/png')
 
 
 """
