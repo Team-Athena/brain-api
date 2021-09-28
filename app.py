@@ -64,6 +64,7 @@ def get_prediction(behaviour):
 
     # TODO: Replace mock data with actual metrics
     return {
+        "behavior": behaviour,
         "mse": 12,
         "mae": 12,
         "correlation": 0.058,
@@ -122,6 +123,9 @@ TODO: Generate the architecture diagrams beforehand using online tool:
 @app.route("/architecture/<string:behaviour>")
 def show_architecture(behaviour):
     # TODO: replace test images with actual ones later
+    if (behaviour == 'ListSort_Unadj'):
+        return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
+    
     return send_file('images/architecture/' + behaviour  + '-test.png', mimetype='image/png')
 
 
