@@ -52,9 +52,12 @@ def get_prediction(behaviour):
     # 2. Make prediction using our model using model.predict() keras function
     # 3. return the metric values and predicted score
 
+    args = Args()
+    args.bhv = behaviour
+
     # model = load_model(filename)
+
     # predictions = model.predict(x_test,verbose=0).squeeze()
-    # # predictions = model.predict(xtest,verbose=0).squeeze()
     # mae  = mean_absolute_error(y_test, predictions)
     # mse  = mean_squared_error(y_test, predictions)
     # rmse = sqrt(mean_squared_error(y_test, predictions))
@@ -88,6 +91,7 @@ def upload_dataset():
         filename = secure_filename(f.filename)
         if f and allowed_file(f.filename):
             f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            os.rename('data/' + filename, 'data/dataset.pkl')
             return Response('{ "message": "Dataset uploaded!" }', status=200, mimetype='application/json')
         else:
             return Response('{ "message": "Invalid dataset format!" }', status=400, mimetype='application/json')
@@ -120,14 +124,18 @@ def show_graphs(behaviour):
 Main handler that returns the architecture of the deep learning model for a particular behaviour
 TODO: Generate the architecture diagrams beforehand using online tool: 
 """
-@app.route("/architecture/<string:behaviour>")
-def show_architecture(behaviour):
-    # TODO: replace test images with actual ones later
-    if (behaviour == 'ListSort_Unadj'):
-        return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
-    
-    return send_file('images/architecture/' + behaviour  + '-test.png', mimetype='image/png')
+# @app.route("/architecture/<string:behaviour>")
+# def show_architecture(behaviour):
+#     # TODO: replace test images with actual ones later
+#     if (behaviour == 'working_memory'):
+#         return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
+#     elif (behaviour == 'ListSort_Unadj'):
+#         return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
+#     elif (behaviour == 'blabla'):
+#         return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
+#     return send_file('images/architecture/' + behaviour  + '-test.png', mimetype='image/png')
 
 
 if __name__ == '__main__':
     app.run(debug=True)
+
