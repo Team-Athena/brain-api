@@ -6,14 +6,17 @@ from flask import Response
 from werkzeug.utils import secure_filename
 from flask_cors import CORS, cross_origin
 import os
+# import scipy
 
-# import numpy as np
-# from tensorflow.keras.models import load_model
+import numpy as np
+from tensorflow.keras.models import load_model
 # from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-# from utils import _bhv_reg_df, _extract_fc
-# from nilearn.connectome import ConnectivityMeasure
-# from nilearn import plotting
+# from python_utils import _bhv_reg_df, _extract_fc, _info
+# from math import sqrt
+from nilearn.connectome import ConnectivityMeasure
+from nilearn import plotting
+from nilearn import datasets
 
 UPLOAD_FOLDER = 'data'
 ALLOWED_EXTENSIONS = {'pkl'}
@@ -52,8 +55,8 @@ def get_prediction(behaviour):
     # 2. Make prediction using our model using model.predict() keras function
     # 3. return the metric values and predicted score
 
-    args = Args()
-    args.bhv = behaviour
+    # args = Args()
+    # args.bhv = behaviour
 
     # model = load_model(filename)
 
@@ -65,15 +68,43 @@ def get_prediction(behaviour):
     # r2   = r2_score(y_test,predictions)
     # r, p = scipy.stats.spearmanr(predictions, y_test)
 
-    # TODO: Replace mock data with actual metrics
+
+    # if behaviour = working memory, get the best model for that behaviour
+    if behaviour == "ListSort_Unadj":
+        model = load_model('data/best_model_working_memory.hdf5')
+    elif behaviour == "ProcSpeed_Unadj":
+        model = load_model('data/best_model_processing_speed.hdf5')
+    elif behaviour == "PMAT24_A_CR":
+        model = load_model('data/best_model_fluid_intelligence.hdf5')
+
+    predictions = model.predict('data/dataset.pkl',verbose=0).squeeze()
+    # predictions = model.predict(xtest,verbose=0).squeeze()
+    # mae  = mean_absolute_error('data/dataset.pkl', predictions)
+    # mse  = mean_squared_error('data/dataset.pkl', predictions)
+    # rmse = sqrt(mean_squared_error(y_test, predictions))
+    # mape = np.mean(np.abs((y_test - predictions) / y_test)) * 100
+    # r2   = r2_score(y_test,predictions)
+    # r, p = scipy.stats.spearmanr(predictions, 'data/dataset.pkl')
+
     return {
         "behavior": behaviour,
-        "mse": 12,
-        "mae": 12,
-        "correlation": 0.058,
+        # "mse": mse,
+        # "mae": mae,
+        # "correlation": r,
         "epochs": 100,
-        "predicted_score": 1
+        "predicted_score": predictions
     }
+
+
+    # TODO: Replace mock data with actual metrics
+    # return {
+    #     "behavior": behaviour,
+    #     "mse": 12,
+    #     "mae": 12,
+    #     "correlation": 0.058,
+    #     "epochs": 100,
+    #     "predicted_score": 1
+    # }
 
 def allowed_file(filename):
     return '.' in filename and \
