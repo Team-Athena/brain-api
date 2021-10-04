@@ -72,12 +72,44 @@ def get_prediction(behaviour):
     # if behaviour = working memory, get the best model for that behaviour
     if behaviour == "ListSort_Unadj":
         model = load_model('data/best_model_working_memory.hdf5')
+        predictions = model.predict('data/dataset.pkl',verbose=0).squeeze()
+
+        return {
+        "behavior": behaviour,
+        "mse": 0.02,
+        "mae": 0.12,
+        "correlation": 0.05,
+        "epochs": 100,
+        "predicted_score": predictions
+        }
+
     elif behaviour == "ProcSpeed_Unadj":
         model = load_model('data/best_model_processing_speed.hdf5')
+        predictions = model.predict('data/dataset.pkl',verbose=0).squeeze()
+
+        return {
+        "behavior": behaviour,
+        "mse": 0.03,
+        "mae": 0.15,
+        "correlation": 0.05,
+        "epochs": 100,
+        "predicted_score": predictions
+        }
+
     elif behaviour == "PMAT24_A_CR":
         model = load_model('data/best_model_fluid_intelligence.hdf5')
+        predictions = model.predict('data/dataset.pkl',verbose=0).squeeze()
 
-    predictions = model.predict('data/dataset.pkl',verbose=0).squeeze()
+        return {
+        "behavior": behaviour,
+        "mse": 0.04,
+        "mae": 0.16,
+        "correlation": 0.05,
+        "epochs": 100,
+        "predicted_score": predictions
+        }
+
+    # predictions = model.predict('data/dataset.pkl',verbose=0).squeeze()
     # predictions = model.predict(xtest,verbose=0).squeeze()
     # mae  = mean_absolute_error('data/dataset.pkl', predictions)
     # mse  = mean_squared_error('data/dataset.pkl', predictions)
@@ -86,14 +118,16 @@ def get_prediction(behaviour):
     # r2   = r2_score(y_test,predictions)
     # r, p = scipy.stats.spearmanr(predictions, 'data/dataset.pkl')
 
-    return {
-        "behavior": behaviour,
-        # "mse": mse,
-        # "mae": mae,
-        # "correlation": r,
-        "epochs": 100,
-        "predicted_score": predictions
-    }
+    
+
+    # return {
+    #     "behavior": behaviour,
+    #     # "mse": mse,
+    #     # "mae": mae,
+    #     # "correlation": r,
+    #     "epochs": 100,
+    #     "predicted_score": predictions
+    # }
 
 
     # TODO: Replace mock data with actual metrics
@@ -168,5 +202,5 @@ TODO: Generate the architecture diagrams beforehand using online tool:
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
-
+    app.run(host='0.0.0.0', debug=True, port=5000)
+    # app.run(host='0.0.0.0', port=5000)
