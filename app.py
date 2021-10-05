@@ -3,13 +3,14 @@ from flask import request
 from flask import send_file
 from flask import render_template
 from flask import Response
+from flask.templating import render_template_string
 from werkzeug.utils import secure_filename
 from flask_cors import CORS, cross_origin
 import os
 
 import numpy as np
-# from tensorflow.keras.models import load_model
-# from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+# # from tensorflow.keras.models import load_model
+# # from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 from utils import _bhv_reg_df, _extract_fc
 from nilearn.connectome import ConnectivityMeasure
@@ -148,8 +149,30 @@ def show_graphs(behaviour):
     # path = 'images/' + behaviour + '-conn-matrix.png'
     display = plotting.plot_matrix(correlation_matrix, colorbar=True, vmax=0.8, vmin=-0.8)
     display.figure.savefig(path)
-    # return send_file(path, mimetype='image/png')
+
     return send_file(path, mimetype='image/png')
+
+@app.route("/3d-graph/<string:behaviour>")
+def show_3d_graph(behaviour):
+
+    args = Args()
+    args.bhv = behaviour
+    bhv_data = _bhv_reg_df(args)    # load fmri data from file
+
+    correlation_measure = ConnectivityMeasure(kind='correlation')
+    correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
+
+    power = pd.read_csv('coords/Schaefer2018_300Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv')
+    coords = np.vstack((power['R'], power['A'], power['S'])).T
+
+    hc_top_k = find_top_k_connections(correlation_matrix, top_50=False, top_100=True)
+    fc_top = np.zeros_like(correlation_matrix)
+    for i, j in hc_top_k:
+        fc_top[i][j] = correlation_matrix[i][j]
+    view = plotting.view_connectome(fc_top, coords, edge_threshold='98%')
+    view.save_as_html("3d-brain.html")
+    return render_template("3d-brain.html")
+    
 
 
 """
