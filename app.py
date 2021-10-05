@@ -165,7 +165,7 @@ def show_3d_graph(behaviour):
     power = pd.read_csv('coords/Schaefer2018_300Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv')
     coords = np.vstack((power['R'], power['A'], power['S'])).T
 
-    hc_top_k = find_top_k_connections(correlation_matrix, top_50=False, top_100=True)
+    hc_top_k = find_top_k_connections(correlation_matrix)
     fc_top = np.zeros_like(correlation_matrix)
     for i, j in hc_top_k:
         fc_top[i][j] = correlation_matrix[i][j]
