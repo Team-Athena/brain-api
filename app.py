@@ -32,7 +32,7 @@ TODO: For more reference and guide refer here: https://flask.palletsprojects.com
 
 class Args:
     def __init__(self):
-        self.input_data = 'data/'
+        self.input_data = 'data/movie_roi_ts/'
         self.roi = 300
         self.net = 7
         self.bhv = 'ListSort_Unadj'
