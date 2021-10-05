@@ -124,16 +124,17 @@ def show_graphs(behaviour):
 Main handler that returns the architecture of the deep learning model for a particular behaviour
 TODO: Generate the architecture diagrams beforehand using online tool: 
 """
-# @app.route("/architecture/<string:behaviour>")
-# def show_architecture(behaviour):
-#     # TODO: replace test images with actual ones later
-#     if (behaviour == 'working_memory'):
-#         return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
-#     elif (behaviour == 'ListSort_Unadj'):
-#         return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
-#     elif (behaviour == 'blabla'):
-#         return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
-#     return send_file('images/architecture/' + behaviour  + '-test.png', mimetype='image/png')
+@app.route("/architecture/<string:behaviour>")
+def show_architecture(behaviour):
+    # TODO: replace test images with actual ones later
+    if (behaviour == 'ListSort_Unadj'):
+        return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
+    elif (behaviour == 'ProcSpeed_Unadj'):
+        return send_file('images/architecture/processing-speed-test.png', mimetype='image/png')
+    elif (behaviour == 'PMAT24_A_CR'):
+        return send_file('images/architecture/fluid-intelligence-test.png', mimetype='image/png')
+    
+    # return send_file('images/architecture/' + behaviour  + '-test.png', mimetype='image/png')
 
 
 if __name__ == '__main__':
