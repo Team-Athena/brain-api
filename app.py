@@ -78,7 +78,7 @@ def get_prediction(behaviour):
         "behavior": behaviour,
         "mse": 0.02,
         "mae": 0.12,
-        "correlation": 0.05,
+        "correlation": 0.011,
         "epochs": 100,
         "predicted_score": predictions
         }
@@ -91,7 +91,7 @@ def get_prediction(behaviour):
         "behavior": behaviour,
         "mse": 0.03,
         "mae": 0.15,
-        "correlation": 0.05,
+        "correlation": 0.019,
         "epochs": 100,
         "predicted_score": predictions
         }
@@ -104,7 +104,7 @@ def get_prediction(behaviour):
         "behavior": behaviour,
         "mse": 0.04,
         "mae": 0.16,
-        "correlation": 0.05,
+        "correlation": 0.02,
         "epochs": 100,
         "predicted_score": predictions
         }
