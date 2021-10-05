@@ -7,13 +7,14 @@ from werkzeug.utils import secure_filename
 from flask_cors import CORS, cross_origin
 import os
 
-# import numpy as np
+import numpy as np
 # from tensorflow.keras.models import load_model
 # from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-# from utils import _bhv_reg_df, _extract_fc
-# from nilearn.connectome import ConnectivityMeasure
-# from nilearn import plotting
+from utils import _bhv_reg_df, _extract_fc
+from nilearn.connectome import ConnectivityMeasure
+from nilearn import plotting
+import pandas as pd
 
 UPLOAD_FOLDER = 'data'
 ALLOWED_EXTENSIONS = {'pkl'}
@@ -40,6 +41,31 @@ class Args:
         self.k_fold = 10
         self.corr_thresh = 0.2
 
+def find_top_k_connections(FC,top_50=True,top_100=False):
+     # use top-100 FC connections
+    if top_100 or top_50:
+        # FC(1:1+size(FC,1):end) = 0;%set diagonal to zeros
+        rcID = np.argwhere( FC )
+        rId, cId = rcID[:,0], rcID[:,1]
+        if len(rId)>100 and top_50 == True: 
+            A=sorted(FC.ravel(),reverse=True);
+            k_pos = A[51];# top 50 (positive values)
+            k_neg = A[-51];# top 50 (negative values)
+            if k_neg>=0.0 and k_pos>0.0:
+                FC[(FC<=k_pos)]=0;
+            else:
+                FC[(FC>=k_neg) & (FC<=k_pos)]=0;
+        elif len(rId)>200 and top_100 == True:
+            A=np.sort(FC.ravel(),'reverse');
+            k_pos = A[101];# top 100 (positive values)
+            k_neg = A[-101];#% top 100 (negative values)
+            if k_neg>=0.0 and k_pos>0.0:
+                FC[(FC<=k_pos)]=0;
+            else:
+                FC[(FC>=k_neg) & (FC<=k_pos)]=0;
+        
+    rcID = np.argwhere( FC!=0 ) ;# % find nonzero indices     
+    return rcID
 
 """
 Main handler that makes prediction for a particular behaviour
@@ -107,17 +133,23 @@ def show_graphs(behaviour):
     # use nilearn's graph library to plot our connectivity matrix
     # return the png image
 
-    # args = Args()
-    # bhv_data = _bhv_reg_df(args)    # load fmri data from file
+    power = pd.read_csv('coords/Schaefer2018_300Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv')
+    coords = np.vstack((power['R'], power['A'], power['S'])).T
 
-    # correlation_measure = ConnectivityMeasure(kind='correlation')
-    # correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
+    # TODO: Implement caching
+    args = Args()
+    args.bhv = behaviour
+    bhv_data = _bhv_reg_df(args)    # load fmri data from file
 
+    path = 'images/' + behaviour + 'connectivity-matrix.png'
+    correlation_measure = ConnectivityMeasure(kind='correlation')
+    correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
+    # np.fill_diagonal(correlation_matrix, 0)
     # path = 'images/' + behaviour + '-conn-matrix.png'
-    # display = plotting.plot_matrix(correlation_matrix, colorbar=True, vmax=0.8, vmin=-0.8)
-    # display.figure.savefig(path)
+    display = plotting.plot_matrix(correlation_matrix, colorbar=True, vmax=0.8, vmin=-0.8)
+    display.figure.savefig(path)
     # return send_file(path, mimetype='image/png')
-    return send_file('images/connectivity-matrix-test.png', mimetype='image/png')
+    return send_file(path, mimetype='image/png')
 
 
 """
