@@ -170,7 +170,7 @@ def show_3d_graph(behaviour):
     for i, j in hc_top_k:
         fc_top[i][j] = correlation_matrix[i][j]
     view = plotting.view_connectome(fc_top, coords, edge_threshold='98%')
-    view.save_as_html("3d-brain.html")
+    view.save_as_html("templates/3d-brain.html")
     return render_template("3d-brain.html")
     
 
