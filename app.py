@@ -7,8 +7,10 @@ from flask.templating import render_template_string
 from werkzeug.utils import secure_filename
 from flask_cors import CORS, cross_origin
 import os
+import pickle
 
 import numpy as np
+<<<<<<< HEAD
 # # from tensorflow.keras.models import load_model
 # # from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
@@ -16,6 +18,16 @@ from utils import _bhv_reg_df, _extract_fc
 from nilearn.connectome import ConnectivityMeasure
 from nilearn import plotting
 import pandas as pd
+=======
+from tensorflow.keras.models import load_model
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
+# from python_utils import _bhv_reg_df, _extract_fc, _info
+from math import sqrt
+from nilearn.connectome import ConnectivityMeasure
+from nilearn import plotting
+from nilearn import datasets
+>>>>>>> d18b0c9a6d44d8766e2d8816c2264ec4292857a2
 
 UPLOAD_FOLDER = 'data'
 ALLOWED_EXTENSIONS = {'pkl'}
@@ -32,7 +44,8 @@ TODO: For more reference and guide refer here: https://flask.palletsprojects.com
 
 class Args:
     def __init__(self):
-        self.input_data = 'data/movie_roi_ts/'
+        # self.input_data = 'data/'
+        self.input_data = 'data/data_subject_100610.pkl'
         self.roi = 300
         self.net = 7
         self.bhv = 'ListSort_Unadj'
@@ -41,6 +54,9 @@ class Args:
         self.corr_type= 'correlation'
         self.k_fold = 10
         self.corr_thresh = 0.2
+
+with open('data/data_subject_100610.pkl', 'rb') as file:
+    dataset = pickle.load(file)
 
 def find_top_k_connections(FC,top_50=True,top_100=False):
      # use top-100 FC connections
@@ -78,29 +94,85 @@ def get_prediction(behaviour):
     # 1. import our hdf5 best_model
     # 2. Make prediction using our model using model.predict() keras function
     # 3. return the metric values and predicted score
+   
+    # args = Args()
+    # args.bhv = behaviour
 
-    args = Args()
-    args.bhv = behaviour
+    # _info(args.bhv)
 
-    # model = load_model(filename)
+    # bhv_data = _bhv_reg_df(args)
+    # bhv_data = bhv_data[0]
+    # fc_data,labels, IDs = _extract_fc(dataset, args.corr_type)
 
-    # predictions = model.predict(x_test,verbose=0).squeeze()
-    # mae  = mean_absolute_error(y_test, predictions)
-    # mse  = mean_squared_error(y_test, predictions)
-    # rmse = sqrt(mean_squared_error(y_test, predictions))
-    # mape = np.mean(np.abs((y_test - predictions) / y_test)) * 100
-    # r2   = r2_score(y_test,predictions)
-    # r, p = scipy.stats.spearmanr(predictions, y_test)
+    conn_measure = ConnectivityMeasure(kind='correlation')
+    connectivity = conn_measure.fit_transform([dataset.T])[0]
+
+    # subj_list = np.unique(IDs)
+    # split_ration = int(0.8*len(np.unique(IDs)))
+    
+    # x = []
+    # for i in range(split_ration,len(subj_list)):
+    #     x.append(fc_data[np.where(IDs==subj_list[i])[0],...])
+    # x = np.concatenate(x,0)
+
+    # x = x[...,None]
+
+    # if behaviour = working memory, get the best model for that behaviour
+    if behaviour == "ListSort_Unadj":
+        model = load_model('data/best_model_working_memory.hdf5')
+        # print(connectivity[None,...,None].shape)
+        predictions = model.predict(connectivity[None,...,None],verbose=0)
+        # print(predictions[0][0])
+        # predictions = list(predictions)
+        # print(predictions)
+
+        return {
+        "behavior": behaviour,
+        "mse": 0.02,
+        "mae": 0.12,
+        "correlation": 0.011,
+        "epochs": 100,
+        "predicted_score": str(predictions[0][0])
+        }
+
+    elif behaviour == "ProcSpeed_Unadj":
+        model = load_model('data/best_model_processing_speed.hdf5')
+        predictions = model.predict(connectivity[None,...,None],verbose=0)
+        # predictions = list(predictions)
+        return {
+        "behavior": behaviour,
+        "mse": 0.03,
+        "mae": 0.15,
+        "correlation": 0.019,
+        "epochs": 100,
+        "predicted_score": str(predictions[0][0])
+        }
+
+    elif behaviour == "PMAT24_A_CR":
+        model = load_model('data/best_model_fluid_intelligence.hdf5')
+        predictions = model.predict(connectivity[None,...,None],verbose=0)
+        # predictions = list(predictions)
+        return {
+        "behavior": behaviour,
+        "mse": 0.04,
+        "mae": 0.16,
+        "correlation": 0.02,
+        "epochs": 100,
+        "predicted_score": str(predictions[0][0])
+        }
+
+
+
 
     # TODO: Replace mock data with actual metrics
-    return {
-        "behavior": behaviour,
-        "mse": 12,
-        "mae": 12,
-        "correlation": 0.058,
-        "epochs": 100,
-        "predicted_score": 1
-    }
+    # return {
+    #     "behavior": behaviour,
+    #     "mse": 12,
+    #     "mae": 12,
+    #     "correlation": 0.058,
+    #     "epochs": 100,
+    #     "predicted_score": 1
+    # }
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -183,15 +255,16 @@ TODO: Generate the architecture diagrams beforehand using online tool:
 def show_architecture(behaviour):
     # TODO: replace test images with actual ones later
     if (behaviour == 'ListSort_Unadj'):
-        return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
+        return send_file('images/architecture/working-memory.png', mimetype='image/png')
     elif (behaviour == 'ProcSpeed_Unadj'):
-        return send_file('images/architecture/processing-speed-test.png', mimetype='image/png')
+        return send_file('images/architecture/processing-speed.png', mimetype='image/png')
     elif (behaviour == 'PMAT24_A_CR'):
-        return send_file('images/architecture/fluid-intelligence-test.png', mimetype='image/png')
+        return send_file('images/architecture/fluid-intelligence.png', mimetype='image/png')
     
     # return send_file('images/architecture/' + behaviour  + '-test.png', mimetype='image/png')
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True, port=5000)
+    # app.run(host='0.0.0.0', port=5000)
 
