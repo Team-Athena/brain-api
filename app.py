@@ -9,25 +9,15 @@ from flask_cors import CORS, cross_origin
 import os
 import pickle
 
-import numpy as np
-<<<<<<< HEAD
-# # from tensorflow.keras.models import load_model
-# # from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+# import numpy as np
+# from tensorflow.keras.models import load_model
+# from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-from utils import _bhv_reg_df, _extract_fc
-from nilearn.connectome import ConnectivityMeasure
-from nilearn import plotting
-import pandas as pd
-=======
-from tensorflow.keras.models import load_model
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-
-# from python_utils import _bhv_reg_df, _extract_fc, _info
-from math import sqrt
-from nilearn.connectome import ConnectivityMeasure
-from nilearn import plotting
-from nilearn import datasets
->>>>>>> d18b0c9a6d44d8766e2d8816c2264ec4292857a2
+# # from python_utils import _bhv_reg_df, _extract_fc, _info
+# from math import sqrt
+# from nilearn.connectome import ConnectivityMeasure
+# from nilearn import plotting
+# from nilearn import datasets
 
 UPLOAD_FOLDER = 'data'
 ALLOWED_EXTENSIONS = {'pkl'}
@@ -55,34 +45,34 @@ class Args:
         self.k_fold = 10
         self.corr_thresh = 0.2
 
-with open('data/data_subject_100610.pkl', 'rb') as file:
-    dataset = pickle.load(file)
+# with open('data/data_subject_100610.pkl', 'rb') as file:
+#     dataset = pickle.load(file)
 
-def find_top_k_connections(FC,top_50=True,top_100=False):
-     # use top-100 FC connections
-    if top_100 or top_50:
-        # FC(1:1+size(FC,1):end) = 0;%set diagonal to zeros
-        rcID = np.argwhere( FC )
-        rId, cId = rcID[:,0], rcID[:,1]
-        if len(rId)>100 and top_50 == True: 
-            A=sorted(FC.ravel(),reverse=True);
-            k_pos = A[51];# top 50 (positive values)
-            k_neg = A[-51];# top 50 (negative values)
-            if k_neg>=0.0 and k_pos>0.0:
-                FC[(FC<=k_pos)]=0;
-            else:
-                FC[(FC>=k_neg) & (FC<=k_pos)]=0;
-        elif len(rId)>200 and top_100 == True:
-            A=np.sort(FC.ravel(),'reverse');
-            k_pos = A[101];# top 100 (positive values)
-            k_neg = A[-101];#% top 100 (negative values)
-            if k_neg>=0.0 and k_pos>0.0:
-                FC[(FC<=k_pos)]=0;
-            else:
-                FC[(FC>=k_neg) & (FC<=k_pos)]=0;
+# def find_top_k_connections(FC,top_50=True,top_100=False):
+#      # use top-100 FC connections
+#     if top_100 or top_50:
+#         # FC(1:1+size(FC,1):end) = 0;%set diagonal to zeros
+#         rcID = np.argwhere( FC )
+#         rId, cId = rcID[:,0], rcID[:,1]
+#         if len(rId)>100 and top_50 == True: 
+#             A=sorted(FC.ravel(),reverse=True);
+#             k_pos = A[51];# top 50 (positive values)
+#             k_neg = A[-51];# top 50 (negative values)
+#             if k_neg>=0.0 and k_pos>0.0:
+#                 FC[(FC<=k_pos)]=0;
+#             else:
+#                 FC[(FC>=k_neg) & (FC<=k_pos)]=0;
+#         elif len(rId)>200 and top_100 == True:
+#             A=np.sort(FC.ravel(),'reverse');
+#             k_pos = A[101];# top 100 (positive values)
+#             k_neg = A[-101];#% top 100 (negative values)
+#             if k_neg>=0.0 and k_pos>0.0:
+#                 FC[(FC<=k_pos)]=0;
+#             else:
+#                 FC[(FC>=k_neg) & (FC<=k_pos)]=0;
         
-    rcID = np.argwhere( FC!=0 ) ;# % find nonzero indices     
-    return rcID
+#     rcID = np.argwhere( FC!=0 ) ;# % find nonzero indices     
+#     return rcID
 
 """
 Main handler that makes prediction for a particular behaviour
@@ -104,53 +94,53 @@ def get_prediction(behaviour):
     # bhv_data = bhv_data[0]
     # fc_data,labels, IDs = _extract_fc(dataset, args.corr_type)
 
-    conn_measure = ConnectivityMeasure(kind='correlation')
-    connectivity = conn_measure.fit_transform([dataset.T])[0]
+    # conn_measure = ConnectivityMeasure(kind='correlation')
+    # connectivity = conn_measure.fit_transform([dataset.T])[0]
 
-    # subj_list = np.unique(IDs)
-    # split_ration = int(0.8*len(np.unique(IDs)))
+    # # subj_list = np.unique(IDs)
+    # # split_ration = int(0.8*len(np.unique(IDs)))
     
-    # x = []
-    # for i in range(split_ration,len(subj_list)):
-    #     x.append(fc_data[np.where(IDs==subj_list[i])[0],...])
-    # x = np.concatenate(x,0)
+    # # x = []
+    # # for i in range(split_ration,len(subj_list)):
+    # #     x.append(fc_data[np.where(IDs==subj_list[i])[0],...])
+    # # x = np.concatenate(x,0)
 
-    # x = x[...,None]
+    # # x = x[...,None]
 
-    # if behaviour = working memory, get the best model for that behaviour
-    if behaviour == "ListSort_Unadj":
-        model = load_model('data/best_model_working_memory.hdf5')
-        # print(connectivity[None,...,None].shape)
-        predictions = model.predict(connectivity[None,...,None],verbose=0)
-        # print(predictions[0][0])
-        # predictions = list(predictions)
-        # print(predictions)
+    # # if behaviour = working memory, get the best model for that behaviour
+    # if behaviour == "ListSort_Unadj":
+    #     model = load_model('data/best_model_working_memory.hdf5')
+    #     # print(connectivity[None,...,None].shape)
+    #     predictions = model.predict(connectivity[None,...,None],verbose=0)
+    #     # print(predictions[0][0])
+    #     # predictions = list(predictions)
+    #     # print(predictions)
 
-        return {
-        "behavior": behaviour,
-        "mse": 0.02,
-        "mae": 0.12,
-        "correlation": 0.011,
-        "epochs": 100,
-        "predicted_score": str(predictions[0][0])
-        }
+    #     return {
+    #     "behavior": behaviour,
+    #     "mse": 0.02,
+    #     "mae": 0.12,
+    #     "correlation": 0.011,
+    #     "epochs": 100,
+    #     "predicted_score": str(predictions[0][0])
+    #     }
 
-    elif behaviour == "ProcSpeed_Unadj":
-        model = load_model('data/best_model_processing_speed.hdf5')
-        predictions = model.predict(connectivity[None,...,None],verbose=0)
-        # predictions = list(predictions)
-        return {
-        "behavior": behaviour,
-        "mse": 0.03,
-        "mae": 0.15,
-        "correlation": 0.019,
-        "epochs": 100,
-        "predicted_score": str(predictions[0][0])
-        }
+    # elif behaviour == "ProcSpeed_Unadj":
+    #     model = load_model('data/best_model_processing_speed.hdf5')
+    #     predictions = model.predict(connectivity[None,...,None],verbose=0)
+    #     # predictions = list(predictions)
+    #     return {
+    #     "behavior": behaviour,
+    #     "mse": 0.03,
+    #     "mae": 0.15,
+    #     "correlation": 0.019,
+    #     "epochs": 100,
+    #     "predicted_score": str(predictions[0][0])
+        # }
 
-    elif behaviour == "PMAT24_A_CR":
-        model = load_model('data/best_model_fluid_intelligence.hdf5')
-        predictions = model.predict(connectivity[None,...,None],verbose=0)
+
+        # model = load_model('data/best_model_fluid_intelligence.hdf5')
+        # predictions = model.predict(connectivity[None,...,None],verbose=0)
         # predictions = list(predictions)
         return {
         "behavior": behaviour,
@@ -158,8 +148,10 @@ def get_prediction(behaviour):
         "mae": 0.16,
         "correlation": 0.02,
         "epochs": 100,
-        "predicted_score": str(predictions[0][0])
+        "predicted_score": 111
         }
+    
+        
 
 
 
@@ -206,44 +198,44 @@ def show_graphs(behaviour):
     # use nilearn's graph library to plot our connectivity matrix
     # return the png image
 
-    power = pd.read_csv('coords/Schaefer2018_300Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv')
-    coords = np.vstack((power['R'], power['A'], power['S'])).T
+    # power = pd.read_csv('coords/Schaefer2018_300Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv')
+    # coords = np.vstack((power['R'], power['A'], power['S'])).T
 
-    # TODO: Implement caching
-    args = Args()
-    args.bhv = behaviour
-    bhv_data = _bhv_reg_df(args)    # load fmri data from file
+    # # TODO: Implement caching
+    # args = Args()
+    # args.bhv = behaviour
+    # bhv_data = _bhv_reg_df(args)    # load fmri data from file
 
-    path = 'images/' + behaviour + 'connectivity-matrix.png'
-    correlation_measure = ConnectivityMeasure(kind='correlation')
-    correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
-    # np.fill_diagonal(correlation_matrix, 0)
-    # path = 'images/' + behaviour + '-conn-matrix.png'
-    display = plotting.plot_matrix(correlation_matrix, colorbar=True, vmax=0.8, vmin=-0.8)
-    display.figure.savefig(path)
+    # path = 'images/' + behaviour + 'connectivity-matrix.png'
+    # correlation_measure = ConnectivityMeasure(kind='correlation')
+    # correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
+    # # np.fill_diagonal(correlation_matrix, 0)
+    # # path = 'images/' + behaviour + '-conn-matrix.png'
+    # display = plotting.plot_matrix(correlation_matrix, colorbar=True, vmax=0.8, vmin=-0.8)
+    # display.figure.savefig(path)
 
-    return send_file(path, mimetype='image/png')
+    return send_file('images/connectivity-matrix-test.png', mimetype='image/png')
 
 @app.route("/3d-graph/<string:behaviour>")
 def show_3d_graph(behaviour):
 
-    args = Args()
-    args.bhv = behaviour
-    bhv_data = _bhv_reg_df(args)    # load fmri data from file
+    # args = Args()
+    # args.bhv = behaviour
+    # bhv_data = _bhv_reg_df(args)    # load fmri data from file
 
-    correlation_measure = ConnectivityMeasure(kind='correlation')
-    correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
+    # correlation_measure = ConnectivityMeasure(kind='correlation')
+    # correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
 
-    power = pd.read_csv('coords/Schaefer2018_300Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv')
-    coords = np.vstack((power['R'], power['A'], power['S'])).T
+    # power = pd.read_csv('coords/Schaefer2018_300Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv')
+    # coords = np.vstack((power['R'], power['A'], power['S'])).T
 
-    hc_top_k = find_top_k_connections(correlation_matrix)
-    fc_top = np.zeros_like(correlation_matrix)
-    for i, j in hc_top_k:
-        fc_top[i][j] = correlation_matrix[i][j]
-    view = plotting.view_connectome(fc_top, coords, edge_threshold='98%')
-    view.save_as_html("templates/3d-brain.html")
-    return render_template("3d-brain.html")
+    # hc_top_k = find_top_k_connections(correlation_matrix)
+    # fc_top = np.zeros_like(correlation_matrix)
+    # for i, j in hc_top_k:
+    #     fc_top[i][j] = correlation_matrix[i][j]
+    # view = plotting.view_connectome(fc_top, coords, edge_threshold='98%')
+    # view.save_as_html("templates/3d-brain.html")
+    return render_template("templates/3d-brain-wow-test.html")
     
 
 
@@ -254,14 +246,14 @@ TODO: Generate the architecture diagrams beforehand using online tool:
 @app.route("/architecture/<string:behaviour>")
 def show_architecture(behaviour):
     # TODO: replace test images with actual ones later
-    if (behaviour == 'ListSort_Unadj'):
-        return send_file('images/architecture/working-memory.png', mimetype='image/png')
-    elif (behaviour == 'ProcSpeed_Unadj'):
-        return send_file('images/architecture/processing-speed.png', mimetype='image/png')
-    elif (behaviour == 'PMAT24_A_CR'):
-        return send_file('images/architecture/fluid-intelligence.png', mimetype='image/png')
+    # if (behaviour == 'ListSort_Unadj'):
+    #     return send_file('images/architecture/working-memory.png', mimetype='image/png')
+    # elif (behaviour == 'ProcSpeed_Unadj'):
+    #     return send_file('images/architecture/processing-speed.png', mimetype='image/png')
+    # elif (behaviour == 'PMAT24_A_CR'):
+    #     return send_file('images/architecture/fluid-intelligence.png', mimetype='image/png')
     
-    # return send_file('images/architecture/' + behaviour  + '-test.png', mimetype='image/png')
+    return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
 
 
 if __name__ == '__main__':
