@@ -142,14 +142,25 @@ def get_prediction(behaviour):
         # model = load_model('data/best_model_fluid_intelligence.hdf5')
         # predictions = model.predict(connectivity[None,...,None],verbose=0)
         # predictions = list(predictions)
-        return {
-        "behavior": behaviour,
-        "mse": 0.04,
-        "mae": 0.16,
-        "correlation": 0.02,
-        "epochs": 100,
-        "predicted_score": 111
-        }
+        if (behaviour == 'ListSort_Unadj'):
+            return {
+            "behavior": behaviour,
+            "mse": 0.04,
+            "mae": 0.16,
+            "correlation": 0.02,
+            "epochs": 100,
+            "predicted_score": 111
+            }
+        else:
+            return {
+            "behavior": behaviour,
+            "mse": 0.14,
+            "mae": 0.96,
+            "correlation": 1.02,
+            "epochs": 1100,
+            "predicted_score": 1121
+            }
+
     
         
 
@@ -235,7 +246,7 @@ def show_3d_graph(behaviour):
     #     fc_top[i][j] = correlation_matrix[i][j]
     # view = plotting.view_connectome(fc_top, coords, edge_threshold='98%')
     # view.save_as_html("templates/3d-brain.html")
-    return render_template("templates/3d-brain-wow-test.html")
+    return render_template("3d-brain-wow-test.html")
     
 
 
@@ -252,8 +263,10 @@ def show_architecture(behaviour):
     #     return send_file('images/architecture/processing-speed.png', mimetype='image/png')
     # elif (behaviour == 'PMAT24_A_CR'):
     #     return send_file('images/architecture/fluid-intelligence.png', mimetype='image/png')
-    
-    return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
+    if behaviour == "ListSort_Unadj":
+        return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
+    else:
+        return send_file('images/connectivity-matrix-test.png', mimetype='image/png')
 
 
 if __name__ == '__main__':
