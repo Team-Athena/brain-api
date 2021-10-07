@@ -181,17 +181,22 @@ TODO: alternatively can refer to https://pythonbasics.org/flask-upload-file/#:~:
 """
 @app.route("/upload", methods = ['GET', 'POST'])
 def upload_dataset():
-    if request.method == 'POST':
-        f = request.files['file']
-        filename = secure_filename(f.filename)
-        if f and allowed_file(f.filename):
-            f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            os.rename('data/' + filename, 'data/dataset.pkl')
-            return Response('{ "message": "Dataset uploaded!" }', status=200, mimetype='application/json')
-        else:
-            return Response('{ "message": "Invalid dataset format!" }', status=400, mimetype='application/json')
-    elif request.method == 'GET':
-       return render_template('upload.html') 
+    f = request.files['file']
+    filename = secure_filename(f.filename)
+    # same file already uploaded
+    if os.path.exists("data/" + filename):
+        print("File already exists and uploaded!")
+        return Response('{ "message": "Dataset already uploaded!" }', status=200, mimetype='application/json')
+    print('file name: ', filename)
+    if f and allowed_file(f.filename):
+        if os.path.exists("data/dataset.pkl"):
+            print("dataset.pkl already exists")
+            os.remove("data/dataset.pkl")
+        f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        os.rename('data/' + filename, 'data/dataset.pkl')
+        return Response('{ "message": "Dataset uploaded!" }', status=200, mimetype='application/json')
+    else:
+        return Response('{ "message": "Invalid dataset format!" }', status=400, mimetype='application/json')
 
 """
 Main handler that generates and returns the connectivity matrix for the uploaded dataset
