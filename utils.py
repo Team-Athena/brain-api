@@ -114,8 +114,10 @@ def _bhv_reg_df(args):
     '''
 
     print('loading data...')
-    load_path = (args.input_data + '/data_MOVIE_runs_' +
-        'roi_%d_net_%d_ts.pkl' %(args.roi, args.net))
+    # load_path = (args.input_data + '/data_MOVIE_runs_' +
+    #     'roi_%d_net_%d_ts.pkl' %(args.roi, args.net))
+    
+    load_path = args.input_data + '/dataset.pkl'
 
     with open(load_path, 'rb') as f:
         data = pickle.load(f)

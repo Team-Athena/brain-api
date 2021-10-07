@@ -8,12 +8,13 @@ from werkzeug.utils import secure_filename
 from flask_cors import CORS, cross_origin
 import os
 import pickle
+import pandas as pd
 
 import numpy as np
 from tensorflow.keras.models import load_model
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-# from python_utils import _bhv_reg_df, _extract_fc, _info
+from utils import _bhv_reg_df, _extract_fc, _info
 from math import sqrt
 from nilearn.connectome import ConnectivityMeasure
 from nilearn import plotting
@@ -35,7 +36,7 @@ TODO: For more reference and guide refer here: https://flask.palletsprojects.com
 class Args:
     def __init__(self):
         # self.input_data = 'data/'
-        self.input_data = 'data/data_subject_100610.pkl'
+        self.input_data = 'data/'
         self.roi = 300
         self.net = 7
         self.bhv = 'ListSort_Unadj'
@@ -45,8 +46,7 @@ class Args:
         self.k_fold = 10
         self.corr_thresh = 0.2
 
-with open('data/data_subject_100610.pkl', 'rb') as file:
-    dataset = pickle.load(file)
+
 
 def find_top_k_connections(FC,top_50=True,top_100=False):
     np.fill_diagonal(FC, 0)
@@ -75,7 +75,7 @@ def find_top_k_connections(FC,top_50=True,top_100=False):
         print('negatives', k_neg)
 
     rcID = np.argwhere( FC!=0 ) ;# % find nonzero indices     
-    return rcIDv
+    return rcID
 
 """
 Main handler that makes prediction for a particular behaviour
@@ -96,6 +96,9 @@ def get_prediction(behaviour):
     # bhv_data = _bhv_reg_df(args)
     # bhv_data = bhv_data[0]
     # fc_data,labels, IDs = _extract_fc(dataset, args.corr_type)
+
+    with open('data/dataset.pkl', 'rb') as file:
+        dataset = pickle.load(file)
 
     conn_measure = ConnectivityMeasure(kind='correlation')
     connectivity = conn_measure.fit_transform([dataset.T])[0]
@@ -198,18 +201,22 @@ def show_graphs(behaviour):
     # import the uploaded dataset from data folder
     # use nilearn's graph library to plot our connectivity matrix
     # return the png image
+    with open('data/dataset.pkl', 'rb') as file:
+        dataset = pickle.load(file)
 
-    power = pd.read_csv('coords/Schaefer2018_300Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv')
-    coords = np.vstack((power['R'], power['A'], power['S'])).T
+    # power = pd.read_csv('coords/Schaefer2018_300Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv')
+    # coords = np.vstack((power['R'], power['A'], power['S'])).T
 
     # TODO: Implement caching
     args = Args()
     args.bhv = behaviour
-    bhv_data = _bhv_reg_df(args)    # load fmri data from file
+    # bhv_data = _bhv_reg_df(args)    # load fmri data from file
 
     path = 'images/' + behaviour + 'connectivity-matrix.png'
+    # correlation_measure = ConnectivityMeasure(kind='correlation')
+    # correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
     correlation_measure = ConnectivityMeasure(kind='correlation')
-    correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
+    correlation_matrix = correlation_measure.fit_transform([dataset.T])[0]
     # np.fill_diagonal(correlation_matrix, 0)
     # path = 'images/' + behaviour + '-conn-matrix.png'
     display = plotting.plot_matrix(correlation_matrix, colorbar=True, vmax=0.8, vmin=-0.8)
@@ -220,12 +227,18 @@ def show_graphs(behaviour):
 @app.route("/3d-graph/<string:behaviour>")
 def show_3d_graph(behaviour):
 
+    with open('data/dataset.pkl', 'rb') as file:
+        dataset = pickle.load(file)
+
     args = Args()
     args.bhv = behaviour
-    bhv_data = _bhv_reg_df(args)    # load fmri data from file
+    # bhv_data = _bhv_reg_df(args)    # load fmri data from file
+
+    # correlation_measure = ConnectivityMeasure(kind='correlation')
+    # correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
 
     correlation_measure = ConnectivityMeasure(kind='correlation')
-    correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
+    correlation_matrix = correlation_measure.fit_transform([dataset.T])[0]
 
     power = pd.read_csv('coords/Schaefer2018_300Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv')
     coords = np.vstack((power['R'], power['A'], power['S'])).T
