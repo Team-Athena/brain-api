@@ -71,8 +71,8 @@ def find_top_k_connections(FC,top_50=True,top_100=False):
                 FC[(FC<=k_pos)]=0;
             else:
                 FC[(FC>=k_neg) & (FC<=k_pos)]=0;
-        print(k_pos)
-        print('negatives', k_neg)
+        # print(k_pos)
+        # print('negatives', k_neg)
 
     rcID = np.argwhere( FC!=0 ) ;# % find nonzero indices     
     return rcID
@@ -112,16 +112,17 @@ def get_prediction(behaviour):
     # x = np.concatenate(x,0)
 
     # x = x[...,None]
-
+    print("predicting...")
     # if behaviour = working memory, get the best model for that behaviour
     if behaviour == "ListSort_Unadj":
         model = load_model('data/best_model_working_memory.hdf5')
         # print(connectivity[None,...,None].shape)
         predictions = model.predict(connectivity[None,...,None],verbose=0)
-        # print(predictions[0][0])
+        print(model.summary())
+        print(str(predictions[0][0]))
         # predictions = list(predictions)
         # print(predictions)
-
+        del model
         return {
         "behavior": behaviour,
         "mse": 0.02,
@@ -135,6 +136,10 @@ def get_prediction(behaviour):
         model = load_model('data/best_model_processing_speed.hdf5')
         predictions = model.predict(connectivity[None,...,None],verbose=0)
         # predictions = list(predictions)
+        print(model.summary())
+        print(predictions)
+        print(str(predictions[0][0]))
+        del model
         return {
         "behavior": behaviour,
         "mse": 0.03,
@@ -142,12 +147,16 @@ def get_prediction(behaviour):
         "correlation": 0.019,
         "epochs": 100,
         "predicted_score": str(predictions[0][0])
+        
         }
 
     elif behaviour == "PMAT24_A_CR":
         model = load_model('data/best_model_fluid_intelligence.hdf5')
         predictions = model.predict(connectivity[None,...,None],verbose=0)
         # predictions = list(predictions)
+        print(model.summary())
+        print(str(predictions[0][0]))
+        del model
         return {
         "behavior": behaviour,
         "mse": 0.04,
