@@ -3,17 +3,22 @@ from flask import request
 from flask import send_file
 from flask import render_template
 from flask import Response
+from flask.templating import render_template_string
 from werkzeug.utils import secure_filename
 from flask_cors import CORS, cross_origin
 import os
+import pickle
+import pandas as pd
 
-# import numpy as np
-# from tensorflow.keras.models import load_model
-# from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import numpy as np
+from tensorflow.keras.models import load_model
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-# from utils import _bhv_reg_df, _extract_fc
-# from nilearn.connectome import ConnectivityMeasure
-# from nilearn import plotting
+from utils import _bhv_reg_df, _extract_fc, _info
+from math import sqrt
+from nilearn.connectome import ConnectivityMeasure
+from nilearn import plotting
+from nilearn import datasets
 
 UPLOAD_FOLDER = 'data'
 ALLOWED_EXTENSIONS = {'pkl'}
@@ -30,6 +35,7 @@ TODO: For more reference and guide refer here: https://flask.palletsprojects.com
 
 class Args:
     def __init__(self):
+        # self.input_data = 'data/'
         self.input_data = 'data/'
         self.roi = 300
         self.net = 7
@@ -41,6 +47,36 @@ class Args:
         self.corr_thresh = 0.2
 
 
+
+def find_top_k_connections(FC,top_50=True,top_100=False):
+    np.fill_diagonal(FC, 0)
+     # use top-100 FC connections
+    if top_100 or top_50:
+        # FC(1:1+size(FC,1):end) = 0;%set diagonal to zeros
+        rcID = np.argwhere( FC )
+        rId, cId = rcID[:,0], rcID[:,1]
+        if len(rId)>100 and top_50 == True:
+            A=sorted(FC.ravel(),reverse=True);
+            k_pos = A[51];# top 50 (positive values)
+            k_neg = A[-51];# top 50 (negative values)
+            if k_neg>=0.0 and k_pos>0.0:
+                FC[(FC<=k_pos)]=0;
+            else:
+                FC[(FC>=k_neg) & (FC<=k_pos)]=0;
+        elif len(rId)>200 and top_100 == True:
+            A=sorted(FC.ravel(), reverse=True);
+            k_pos = A[101];# top 100 (positive values)
+            k_neg = A[-101];#% low 100 (negative values)
+            if k_neg>=0.0 and k_pos>0.0:
+                FC[(FC<=k_pos)]=0;
+            else:
+                FC[(FC>=k_neg) & (FC<=k_pos)]=0;
+        # print(k_pos)
+        # print('negatives', k_neg)
+
+    rcID = np.argwhere( FC!=0 ) ;# % find nonzero indices     
+    return rcID
+
 """
 Main handler that makes prediction for a particular behaviour
 TODO: Replace test datasets (x_test, y_test) with uploaded single-user dataset
@@ -51,29 +87,97 @@ def get_prediction(behaviour):
     # 1. import our hdf5 best_model
     # 2. Make prediction using our model using model.predict() keras function
     # 3. return the metric values and predicted score
+   
+    # args = Args()
+    # args.bhv = behaviour
 
-    args = Args()
-    args.bhv = behaviour
+    # _info(args.bhv)
 
-    # model = load_model(filename)
+    # bhv_data = _bhv_reg_df(args)
+    # bhv_data = bhv_data[0]
+    # fc_data,labels, IDs = _extract_fc(dataset, args.corr_type)
 
-    # predictions = model.predict(x_test,verbose=0).squeeze()
-    # mae  = mean_absolute_error(y_test, predictions)
-    # mse  = mean_squared_error(y_test, predictions)
-    # rmse = sqrt(mean_squared_error(y_test, predictions))
-    # mape = np.mean(np.abs((y_test - predictions) / y_test)) * 100
-    # r2   = r2_score(y_test,predictions)
-    # r, p = scipy.stats.spearmanr(predictions, y_test)
+    with open('data/dataset.pkl', 'rb') as file:
+        dataset = pickle.load(file)
+
+    conn_measure = ConnectivityMeasure(kind='correlation')
+    connectivity = conn_measure.fit_transform([dataset.T])[0]
+
+    # subj_list = np.unique(IDs)
+    # split_ration = int(0.8*len(np.unique(IDs)))
+    
+    # x = []
+    # for i in range(split_ration,len(subj_list)):
+    #     x.append(fc_data[np.where(IDs==subj_list[i])[0],...])
+    # x = np.concatenate(x,0)
+
+    # x = x[...,None]
+    print("predicting...")
+    # if behaviour = working memory, get the best model for that behaviour
+    if behaviour == "ListSort_Unadj":
+        model = load_model('data/best_model_working_memory.hdf5')
+        # print(connectivity[None,...,None].shape)
+        predictions = model.predict(connectivity[None,...,None],verbose=0)
+        print(model.summary())
+        print(str(predictions[0][0]))
+        # predictions = list(predictions)
+        # print(predictions)
+        del model
+        return {
+        "behavior": behaviour,
+        "mse": 0.02,
+        "mae": 0.12,
+        "correlation": 0.011,
+        "epochs": 100,
+        "predicted_score": str(predictions[0][0])
+        }
+
+    elif behaviour == "ProcSpeed_Unadj":
+        model = load_model('data/best_model_processing_speed.hdf5')
+        predictions = model.predict(connectivity[None,...,None],verbose=0)
+        # predictions = list(predictions)
+        print(model.summary())
+        print(predictions)
+        print(str(predictions[0][0]))
+        del model
+        return {
+        "behavior": behaviour,
+        "mse": 0.03,
+        "mae": 0.15,
+        "correlation": 0.019,
+        "epochs": 100,
+        "predicted_score": str(predictions[0][0])
+        
+        }
+
+    elif behaviour == "PMAT24_A_CR":
+        model = load_model('data/best_model_fluid_intelligence.hdf5')
+        predictions = model.predict(connectivity[None,...,None],verbose=0)
+        # predictions = list(predictions)
+        print(model.summary())
+        print(str(predictions[0][0]))
+        del model
+        return {
+        "behavior": behaviour,
+        "mse": 0.04,
+        "mae": 0.16,
+        "correlation": 0.02,
+        "epochs": 100,
+        "predicted_score": str(predictions[0][0])
+        }
+
+
+
 
     # TODO: Replace mock data with actual metrics
-    return {
-        "behavior": behaviour,
-        "mse": 12,
-        "mae": 12,
-        "correlation": 0.058,
-        "epochs": 100,
-        "predicted_score": 1
-    }
+    # return {
+    #     "behavior": behaviour,
+    #     "mse": 12,
+    #     "mae": 12,
+    #     "correlation": 0.058,
+    #     "epochs": 100,
+    #     "predicted_score": 1
+    # }
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -86,17 +190,22 @@ TODO: alternatively can refer to https://pythonbasics.org/flask-upload-file/#:~:
 """
 @app.route("/upload", methods = ['GET', 'POST'])
 def upload_dataset():
-    if request.method == 'POST':
-        f = request.files['file']
-        filename = secure_filename(f.filename)
-        if f and allowed_file(f.filename):
-            f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            os.rename('data/' + filename, 'data/dataset.pkl')
-            return Response('{ "message": "Dataset uploaded!" }', status=200, mimetype='application/json')
-        else:
-            return Response('{ "message": "Invalid dataset format!" }', status=400, mimetype='application/json')
-    elif request.method == 'GET':
-       return render_template('upload.html') 
+    f = request.files['file']
+    filename = secure_filename(f.filename)
+    # same file already uploaded
+    if os.path.exists("data/" + filename):
+        print("File already exists and uploaded!")
+        return Response('{ "message": "Dataset already uploaded!" }', status=200, mimetype='application/json')
+    print('file name: ', filename)
+    if f and allowed_file(f.filename):
+        if os.path.exists("data/dataset.pkl"):
+            print("dataset.pkl already exists")
+            os.remove("data/dataset.pkl")
+        f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        os.rename('data/' + filename, 'data/dataset.pkl')
+        return Response('{ "message": "Dataset uploaded!" }', status=200, mimetype='application/json')
+    else:
+        return Response('{ "message": "Invalid dataset format!" }', status=400, mimetype='application/json')
 
 """
 Main handler that generates and returns the connectivity matrix for the uploaded dataset
@@ -106,36 +215,76 @@ def show_graphs(behaviour):
     # import the uploaded dataset from data folder
     # use nilearn's graph library to plot our connectivity matrix
     # return the png image
+    with open('data/dataset.pkl', 'rb') as file:
+        dataset = pickle.load(file)
 
-    # args = Args()
+    # power = pd.read_csv('coords/Schaefer2018_300Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv')
+    # coords = np.vstack((power['R'], power['A'], power['S'])).T
+
+    # TODO: Implement caching
+    args = Args()
+    args.bhv = behaviour
+    # bhv_data = _bhv_reg_df(args)    # load fmri data from file
+
+    path = 'images/' + behaviour + 'connectivity-matrix.png'
+    # correlation_measure = ConnectivityMeasure(kind='correlation')
+    # correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
+    correlation_measure = ConnectivityMeasure(kind='correlation')
+    correlation_matrix = correlation_measure.fit_transform([dataset.T])[0]
+    # np.fill_diagonal(correlation_matrix, 0)
+    # path = 'images/' + behaviour + '-conn-matrix.png'
+    display = plotting.plot_matrix(correlation_matrix, colorbar=True, vmax=0.8, vmin=-0.8)
+    display.figure.savefig(path)
+
+    return send_file(path, mimetype='image/png')
+
+@app.route("/3d-graph/<string:behaviour>")
+def show_3d_graph(behaviour):
+
+    with open('data/dataset.pkl', 'rb') as file:
+        dataset = pickle.load(file)
+
+    args = Args()
+    args.bhv = behaviour
     # bhv_data = _bhv_reg_df(args)    # load fmri data from file
 
     # correlation_measure = ConnectivityMeasure(kind='correlation')
     # correlation_matrix = correlation_measure.fit_transform([bhv_data[0]['fmri']])[0]
 
-    # path = 'images/' + behaviour + '-conn-matrix.png'
-    # display = plotting.plot_matrix(correlation_matrix, colorbar=True, vmax=0.8, vmin=-0.8)
-    # display.figure.savefig(path)
-    # return send_file(path, mimetype='image/png')
-    return send_file('images/connectivity-matrix-test.png', mimetype='image/png')
+    correlation_measure = ConnectivityMeasure(kind='correlation')
+    correlation_matrix = correlation_measure.fit_transform([dataset.T])[0]
+
+    power = pd.read_csv('coords/Schaefer2018_300Parcels_7Networks_order_FSLMNI152_1mm.Centroid_RAS.csv')
+    coords = np.vstack((power['R'], power['A'], power['S'])).T
+
+    hc_top_k = find_top_k_connections(correlation_matrix, top_50=False, top_100=True)
+    fc_top = np.zeros_like(correlation_matrix)
+    for i, j in hc_top_k:
+        fc_top[i][j] = correlation_matrix[i][j]
+    view = plotting.view_connectome(fc_top, coords, edge_threshold='98%', node_size=5)
+    view.save_as_html("templates/3d-brain.html")
+    return render_template("3d-brain.html")
+    
 
 
 """
 Main handler that returns the architecture of the deep learning model for a particular behaviour
 TODO: Generate the architecture diagrams beforehand using online tool: 
 """
-# @app.route("/architecture/<string:behaviour>")
-# def show_architecture(behaviour):
-#     # TODO: replace test images with actual ones later
-#     if (behaviour == 'working_memory'):
-#         return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
-#     elif (behaviour == 'ListSort_Unadj'):
-#         return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
-#     elif (behaviour == 'blabla'):
-#         return send_file('images/architecture/working-memory-test.png', mimetype='image/png')
-#     return send_file('images/architecture/' + behaviour  + '-test.png', mimetype='image/png')
+@app.route("/architecture/<string:behaviour>")
+def show_architecture(behaviour):
+    # TODO: replace test images with actual ones later
+    if (behaviour == 'ListSort_Unadj'):
+        return send_file('images/architecture/working-memory.png', mimetype='image/png')
+    elif (behaviour == 'ProcSpeed_Unadj'):
+        return send_file('images/architecture/processing-speed.png', mimetype='image/png')
+    elif (behaviour == 'PMAT24_A_CR'):
+        return send_file('images/architecture/fluid-intelligence.png', mimetype='image/png')
+    
+    # return send_file('images/architecture/' + behaviour  + '-test.png', mimetype='image/png')
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True, port=5000)
+    # app.run(host='0.0.0.0', port=5000)
 
